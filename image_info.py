@@ -36,33 +36,38 @@ class ImageInfo(ImageEdit):
         return dirname[:-1] if no_star and dirname[-1] == "*" else dirname
 
     def full_path(self, no_star=False):
-        return self.path[:-1] if no_star and self.path[-1] == "*" else self.path
+        return self.path[:-1] if no_star and self.path[-1] == '*' else self.path
 
     def save(self):
         if not self.unsaved:
             return
         self.unsaved = False
-        self.image.seve(self.path)
+        self.image.save(self.path)
 
     def save_as(self):
         old_ext = self.file_extension(no_star=True)
         new_path = fd.asksaveasfilename(
             initialdir=self.full_path(no_star=True),
-            filetypes=[("images", "*.jpeg; *.jpg; *.png"), ]
+            defaultextension=".jpg",
+            filetypes=[("PNG(*.png)", "*.png"),
+                       ("Img", "*.jpeg;*.jpg;*.png")]
         )  # запросили новый путь
         if not new_path:
             return
-        new_path, new_ext = os.path.split(new_path)
-        if not new_ext:
-            new_ext = old_ext
-        elif new_ext != old_ext:
-            raise ValueError("Неправильное разрешене файла",
-                         f"Получили неправильное расширение: '{new_ext}'. Предыдущее: '{old_ext}'")
 
-        self.image.save(new_path + new_ext)
+        print(new_path)
+        #new_path, new_ext = os.path.split(new_path)
+        # if not new_ext:
+        #     new_ext = old_ext
+        # elif new_ext != old_ext:
+        #     raise ValueError(f"Неправильное расширение файла: '{new_ext}'. Предыдущее: '{old_ext}'")
+
+        #self.image.save(new_path + new_ext)
+        self.image.save(new_path)
         self.image.close()
 
-        self.path = new_path + new_ext
+        #self.path = new_path + new_ext
+        self.path = new_path
         self.unsaved = False
 
         self.image = Image.open(self.path)
