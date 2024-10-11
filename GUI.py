@@ -23,7 +23,7 @@ class PyPhotoEditor:
 
     def init(self):
         self.root.title("Py Photo Editor")
-        self.root.geometry(f'630x500+500+50')
+        self.root.geometry(f'630x552+500+50')
         self.root.iconphoto(True, PhotoImage(file="Image/icon.png"))  # закрепили картинку на панели программы
         self.image_tabs.enable_traversal()  # позволяет использовать некоторые сочетания клавиш для переключения между вкладками
 
@@ -49,79 +49,79 @@ class PyPhotoEditor:
     def draw_menu(self):
         self.menu_bar = Menu(self.root)
 
-        #self.menu_bar.add_cascade(label="File", menu=file_menu)
         file_menu = Menu(self.menu_bar, tearoff=0)
-        file_menu.add_command(label="Open", command=self.open_new_images)
+        file_menu.add_command(label="Открыть", command=self.open_new_images)
 
         self.open_recent_menu = Menu(file_menu, tearoff=0)
-        file_menu.add_cascade(label="Open Recent", menu=self.open_recent_menu)
+        file_menu.add_cascade(label="Открыть недавний", menu=self.open_recent_menu)
         for path in self.last_viewed_images:
             self.open_recent_menu.add_command(label=path, command=lambda x=path: self.add_new_image(x))
 
         file_menu.add_separator()
-        file_menu.add_command(label="Save", command=self.save_current_image)
-        file_menu.add_command(label="Save as", command=self.save_image_as)
-        file_menu.add_command(label="Save all", command=self.save_all_changes)
+        file_menu.add_command(label="Сохранить", command=self.save_current_image)
+        file_menu.add_command(label="Сохранить как", command=self.save_image_as)
+        file_menu.add_command(label="Сохранить всё", command=self.save_all_changes)
         file_menu.add_separator()
-        file_menu.add_command(label="Close image", command=self.close_current_image)
+        file_menu.add_command(label="Закрыть", command=self.close_current_image)
         file_menu.add_separator()
-        file_menu.add_command(label="Delete image", command=self.delete_current_image)
+        file_menu.add_command(label="Удалить", command=self.delete_current_image)
         file_menu.add_separator()
-        file_menu.add_command(label="Exit", command=self._close)
+        file_menu.add_command(label="Выход", command=self._close)
 
-        self.menu_bar.add_cascade(label="File", menu=file_menu)
+        self.menu_bar.add_cascade(label="Файл", menu=file_menu)
 
         edit_menu = Menu(self.menu_bar, tearoff=0)
 
         rotate_menu = Menu(edit_menu, tearoff=0)
-        rotate_menu.add_command(label="Rotate left by 90", command=lambda: self.rotate_current_image(90))
-        rotate_menu.add_command(label="Rotate right by 90", command=lambda: self.rotate_current_image(-90))
-        rotate_menu.add_command(label="Rotate left by 180", command=lambda: self.rotate_current_image(180))
-        rotate_menu.add_command(label="Rotate right by 180", command=lambda: self.rotate_current_image(-180))
+        rotate_menu.add_command(label="Влево на 90˚", command=lambda: self.rotate_current_image(90))
+        rotate_menu.add_command(label="Вправо на 90˚", command=lambda: self.rotate_current_image(-90))
+        rotate_menu.add_command(label="Влево на 180˚", command=lambda: self.rotate_current_image(180))
+        rotate_menu.add_command(label="Вправо на 180˚", command=lambda: self.rotate_current_image(-180))
 
         flip_menu = Menu(edit_menu, tearoff=0)
-        flip_menu.add_command(label="Flip horizontally", command=lambda: self.flip_current_image(Image.FLIP_LEFT_RIGHT))
-        flip_menu.add_command(label="Flip vertically", command=lambda: self.flip_current_image(Image.FLIP_TOP_BOTTOM))
+        flip_menu.add_command(label="По горизонтали", command=lambda: self.flip_current_image(Image.FLIP_LEFT_RIGHT))
+        flip_menu.add_command(label="По вертикали", command=lambda: self.flip_current_image(Image.FLIP_TOP_BOTTOM))
 
         resize_menu = Menu(edit_menu, tearoff=0)
-        resize_menu.add_command(label="25% of original size", command=lambda: self.resize_current_image(25))
-        resize_menu.add_command(label="50% of original size", command=lambda: self.resize_current_image(50))
-        resize_menu.add_command(label="75% of original size", command=lambda: self.resize_current_image(75))
-        resize_menu.add_command(label="125% of original size", command=lambda: self.resize_current_image(125))
-        resize_menu.add_command(label="150% of original size", command=lambda: self.resize_current_image(150))
-        resize_menu.add_command(label="175% of original size", command=lambda: self.resize_current_image(175))
+        resize_menu.add_command(label="25% от первоначального размера", command=lambda: self.resize_current_image(25))
+        resize_menu.add_command(label="50% от первоначального размера", command=lambda: self.resize_current_image(50))
+        resize_menu.add_command(label="75% от первоначального размера", command=lambda: self.resize_current_image(75))
+        resize_menu.add_command(label="125% от первоначального размера", command=lambda: self.resize_current_image(125))
+        resize_menu.add_command(label="150% от первоначального размера", command=lambda: self.resize_current_image(150))
+        resize_menu.add_command(label="175% от первоначального размера", command=lambda: self.resize_current_image(175))
 
         filter_menu = Menu(edit_menu, tearoff=0)
-        filter_menu.add_command(label="Blur", command=lambda: self.apply_filter_to_current_image(ImageFilter.BLUR))
-        filter_menu.add_command(label="Sharpen",
+        filter_menu.add_command(label="Размытие", command=lambda: self.apply_filter_to_current_image(ImageFilter.BLUR))
+        filter_menu.add_command(label="Резкость",
                                 command=lambda: self.apply_filter_to_current_image(ImageFilter.SHARPEN))
-        filter_menu.add_command(label="Contur", command=lambda: self.apply_filter_to_current_image(ImageFilter.CONTOUR))
-        filter_menu.add_command(label="Detail", command=lambda: self.apply_filter_to_current_image(ImageFilter.DETAIL))
-        filter_menu.add_command(label="Smooth", command=lambda: self.apply_filter_to_current_image(ImageFilter.SMOOTH))
+        filter_menu.add_command(label="Контур", command=lambda: self.apply_filter_to_current_image(ImageFilter.CONTOUR))
+        filter_menu.add_command(label="Детализация", command=lambda: self.apply_filter_to_current_image(ImageFilter.DETAIL))
+        filter_menu.add_command(label="Сглаживание", command=lambda: self.apply_filter_to_current_image(ImageFilter.SMOOTH))
 
         crop_menu = Menu(edit_menu, tearoff=0)
-        crop_menu.add_command(label="Start selection", command=self.start_crop_selection_of_current_image)
-        crop_menu.add_command(label="Crop selected", command=self.crop_selection_of_current_image)
+        crop_menu.add_command(label="Начать выделение", command=self.start_crop_selection_of_current_image)
+        crop_menu.add_command(label="Обрезать", command=self.crop_selection_of_current_image)
+        crop_menu.add_command(label="Отменить", command=self.cancel_selection_of_current_image)
 
         enhance_menu = Menu(edit_menu, tearoff=0)
-        enhance_menu.add_command(label="Color", command=lambda: self.enhance_current_image("Color", ImageEnhance.Color))
-        enhance_menu.add_command(label="Contrast",
+        enhance_menu.add_command(label="Цвет", command=lambda: self.enhance_current_image("Color", ImageEnhance.Color))
+        enhance_menu.add_command(label="Контраст",
                                  command=lambda: self.enhance_current_image("Contrast", ImageEnhance.Contrast))
-        enhance_menu.add_command(label="Brightness",
+        enhance_menu.add_command(label="Яркость",
                                  command=lambda: self.enhance_current_image("Brightness", ImageEnhance.Brightness))
-        enhance_menu.add_command(label="Sharpness",
+        enhance_menu.add_command(label="Чёткость",
                                  command=lambda: self.enhance_current_image("Sharpness", ImageEnhance.Sharpness))
 
-        edit_menu.add_cascade(label="Flip", menu=flip_menu)
-        edit_menu.add_cascade(label="Rotate", menu=rotate_menu)
-        edit_menu.add_cascade(label="Resize", menu=resize_menu)
+        edit_menu.add_cascade(label="Отзеркалить", menu=flip_menu)
+        edit_menu.add_cascade(label="Повернуть", menu=rotate_menu)
+        edit_menu.add_cascade(label="Изменить размер", menu=resize_menu)
         edit_menu.add_separator()
-        edit_menu.add_cascade(label="Filter", menu=filter_menu)
-        edit_menu.add_cascade(label="Enhance", menu=enhance_menu)
+        edit_menu.add_cascade(label="Фильтр", menu=filter_menu)
+        edit_menu.add_cascade(label="Повысить", menu=enhance_menu)
         edit_menu.add_separator()
-        edit_menu.add_cascade(label="Crop", menu=crop_menu)
+        edit_menu.add_cascade(label="Обрезание", menu=crop_menu)
 
-        self.menu_bar.add_cascade(label="Edit", menu=edit_menu)
+        self.menu_bar.add_cascade(label="Редактировать", menu=edit_menu)
 
         self.root.configure(menu=self.menu_bar)
 
@@ -149,7 +149,7 @@ class PyPhotoEditor:
     def auto_resize_current_image(self, image):
         w, h = image.size
         max_w = 500
-        max_h = 450
+        max_h = 500
         res_w = int()
         res_h = int()
 
@@ -161,8 +161,6 @@ class PyPhotoEditor:
             res_h = max_h
             ratio = w / h
             res_w = max_h * ratio
-        # w = (w * 14) // 100
-        # h = (h * 14) // 100
 
         img = image.resize((round(res_w), round(res_h)), Image.Resampling.LANCZOS)
         return img
@@ -187,13 +185,13 @@ class PyPhotoEditor:
         image_info = ImageInfo(image, image_path, image_tab)
         self.opened_images.append(image_info)
 
-        #  делаем холст расширяемым
+        # делаем холст расширяемым
         image_tab.rowconfigure(0, weight=1)
         image_tab.columnconfigure(0, weight=1)
 
         canvas = Canvas(image_tab, highlightthickness=0)
         canvas.grid(row=0, column=0, sticky="nsew")
-        canvas.update()  #  дождаться момента пока холст прогрузится
+        canvas.update()  # дождаться момента пока холст прогрузится
 
         image_info.set_canvas(canvas)
 
@@ -316,6 +314,16 @@ class PyPhotoEditor:
             image.crop_selected_area()
             image.unsaved = True
             self.update_image_inside_app(image)
+        except ValueError as e:
+            mb.showerror("Ошибка обрезки", str(e))
+
+    def cancel_selection_of_current_image(self):
+        image = self.current_image()
+        if not image:
+            return
+
+        try:
+            image.cancel_crop_selection()
         except ValueError as e:
             mb.showerror("Ошибка обрезки", str(e))
 
