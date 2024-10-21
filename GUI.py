@@ -3,19 +3,21 @@ from tkinter import ttk
 from tkinter import filedialog as fd
 from tkinter import messagebox as mb
 from tkinter.ttk import Notebook
-from PIL import Image, ImageFilter, ImageEnhance
+from PIL import Image, ImageFilter, ImageEnhance, ImageTk
 import os
 from image_info import ImageInfo
 from enhance_slider_window import EnhanceSliderWindow
 
 
-class PyPhotoEditor:
+class MainView:
+    root = Tk()  # корень нашего виджета
+    list_opened_images = list()  # список для открытых вкладок с изображениями
+    description_view = None
+    image_tabs = Notebook(root)
+
     def __init__(self):
-        self.root = Tk()  # корен нашего виджета
-        self.image_tabs = Notebook(self.root)  # панель для работы с вкладками
-        self.button = ttk.Button(self.root, text='Далее', command=self.further)
-        self.opened_images = []  # список для открытых вкладок с изображениями
-        self.last_viewed_images = []
+        self.button = None
+        self.list_last_viewed_images = list()
         self.menu_bar = None
 
         self.init()  # инициализация окна
@@ -24,27 +26,37 @@ class PyPhotoEditor:
     def init(self):
         self.root.title("Py Photo Editor")
         self.root.geometry(f'630x552+500+50')
-        self.root.iconphoto(True, PhotoImage(file="Image/icon.png"))  # закрепили картинку на панели программы
+        #self.root.iconphoto(True, PhotoImage(file="Image/icon.png"))  # закрепили картинку на панели программы
         self.image_tabs.enable_traversal()  # позволяет использовать некоторые сочетания клавиш для переключения между вкладками
 
         self.root.bind("<Escape>", self._close)  # привязали клавишу ESC на закрытие программы
         self.root.protocol("WM_DELETE_WINDOW", self._close)
 
-    def further(self):
-        self.destroy_main_widgets()
-        Install(self.root)
+    def go_next(self):
+        if self.list_opened_images:
+            self.root.configure(menu=Menu())
+            self.image_tabs.pack_forget()
+            self.button.pack_forget()
+            if not self.description_view:
+                self.description_view = DescriptionView()
+            self.description_view.pack()
 
-    def destroy_main_widgets(self):
-        self.image_tabs.destroy()
-        self.menu_bar.destroy()
-        self.button.destroy()
+    def save_img(self):
+        folder_path = "C:/Users/user/PycharmProjects/AutoUploader/Image"  # Замените на ваш путь
+        for image in self.list_opened_images:
+            new_image_path = folder_path + "/" + image.path.split('/')[-1]
+            image.set_path(new_image_path)
+            image.save(True)
+            print(f"Изображение сохранено: {image.path}")
 
-    def run(self):  # метод запуска окна
+    def run(self, meaning_bool=False):  # метод запуска окна
         self.draw_menu()  # метод прорисовки меню окна
         self.draw_widgets()  # метод прорисовки виджетов окна
         self.draw_button()
-
-        self.root.mainloop()
+        if meaning_bool:
+            self.open_new_images(True)
+        else:
+            self.root.mainloop()
 
     def draw_menu(self):
         self.menu_bar = Menu(self.root)
@@ -54,8 +66,8 @@ class PyPhotoEditor:
 
         self.open_recent_menu = Menu(file_menu, tearoff=0)
         file_menu.add_cascade(label="Открыть недавний", menu=self.open_recent_menu)
-        for path in self.last_viewed_images:
-            self.open_recent_menu.add_command(label=path, command=lambda x=path: self.add_new_image(x))
+        # for path in self.last_viewed_images:
+        #     self.open_recent_menu.add_command(label=path, command=lambda x=path: self.add_new_image(x))
 
         file_menu.add_separator()
         file_menu.add_command(label="Сохранить", command=self.save_current_image)
@@ -130,28 +142,31 @@ class PyPhotoEditor:
             return
 
         self.open_recent_menu.delete(0, "end")
-        for path in self.last_viewed_images:
+        for path in self.list_last_viewed_images:
             self.open_recent_menu.add_command(label=path, command=lambda x=path: self.add_new_image(x))
 
     def draw_widgets(self):
         self.image_tabs.pack(fill="both", expand=1)  # отрисовали панель
 
     def draw_button(self):
+        self.button = ttk.Button(self.root, text='Далее', command=self.go_next)
         self.button.pack(anchor='se')
 
-    def open_new_images(self):
-        image_paths = fd.askopenfilenames(filetypes=(("Images", "*.jpeg;*.jpg;*.png"),))
-        for image_path in image_paths:
-            self.add_new_image(image_path)
-
-########################################################################################################################
+    def open_new_images(self, images_loaded=False):
+        if images_loaded:
+            for image in self.list_opened_images:
+                self.draw_new_image(image, True)
+        else:
+            image_paths = fd.askopenfilenames(filetypes=(("Images", "*.jpeg;*.jpg;*.png"),))
+            for image_path in image_paths:
+                self.add_new_image(image_path)
 
     def auto_resize_current_image(self, image):
+        res_w = int()
+        res_h = int()
         w, h = image.size
         max_w = 500
         max_h = 500
-        res_w = int()
-        res_h = int()
 
         if w >= h:
             res_w = max_w
@@ -162,48 +177,48 @@ class PyPhotoEditor:
             ratio = w / h
             res_w = max_h * ratio
 
-        img = image.resize((round(res_w), round(res_h)), Image.Resampling.LANCZOS)
-        return img
-
-########################################################################################################################
+        return image.resize((round(res_w), round(res_h)), Image.Resampling.LANCZOS)
 
     def add_new_image(self, image_path):
         if not os.path.isfile(image_path):
-            if image_path in self.last_viewed_images:
-                self.last_viewed_images.remove(image_path)
+            if image_path in self.list_last_viewed_images:
+                self.list_last_viewed_images.remove(image_path)
                 self.update_open_recent_menu()
             return
-        opened_images = [info.path for info in self.opened_images]
+        opened_images = [info.path for info in self.list_opened_images]
         if image_path in opened_images:  # отвечает за то чтобы картинка не открывалась дважды
             index = opened_images.index(image_path)
             self.image_tabs.select(index)
             return
 
         image = Image.open(image_path)
+        image = self.auto_resize_current_image(image)
         image_tab = Frame(self.image_tabs)  # создаем новую вкладку
 
         image_info = ImageInfo(image, image_path, image_tab)
-        self.opened_images.append(image_info)
+        self.list_opened_images.append(image_info)
+        self.draw_new_image(image_info, False)
 
+    def draw_new_image(self, image, isRedraw):
         # делаем холст расширяемым
-        image_tab.rowconfigure(0, weight=1)
-        image_tab.columnconfigure(0, weight=1)
+        image.tab.rowconfigure(0, weight=1)
+        image.tab.columnconfigure(0, weight=1)
 
-        canvas = Canvas(image_tab, highlightthickness=0)
+        canvas = Canvas(image.tab, highlightthickness=0)
         canvas.grid(row=0, column=0, sticky="nsew")
         canvas.update()  # дождаться момента пока холст прогрузится
 
-        image_info.set_canvas(canvas)
-
-        self.image_tabs.add(image_tab, text=image_info.filename())  # добавили новую вкладку и название вкладки
-        self.image_tabs.select(image_tab)  # выделяем выбранную вкладку
+        image.set_canvas(canvas)
+        if not isRedraw:
+            self.image_tabs.add(image.tab, text=image.filename())  # добавили новую вкладку и название вкладки
+        self.image_tabs.select(image.tab)  # выделяем выбранную вкладку
 
     def current_image(self):  # возвращает tab, image, path
         current_tab = self.image_tabs.select()  # выбрали вкладку
         if not current_tab:
             return None
         tab_number = self.image_tabs.index(current_tab)  # получили порядковый № вкладки
-        return self.opened_images[tab_number]
+        return self.list_opened_images[tab_number]
 
     def save_current_image(self):
         image = self.current_image()
@@ -227,7 +242,7 @@ class PyPhotoEditor:
             mb.showerror("Cохранить как ошибку", str(e))
 
     def save_all_changes(self):
-        for image_info in self.opened_images:
+        for image_info in self.list_opened_images:
             if image_info.unsaved:  # если нет изменений
                 continue
             image_info.save()
@@ -244,7 +259,7 @@ class PyPhotoEditor:
 
         image.close()
         self.image_tabs.forget(image.tab)
-        self.opened_images.remove(image)
+        self.list_opened_images.remove(image)
 
     def delete_current_image(self):
         image = self.current_image()
@@ -256,7 +271,7 @@ class PyPhotoEditor:
 
         image.delete()
         self.image_tabs.forget(image.tab)
-        self.opened_images.remove(image)
+        self.list_opened_images.remove(image)
 
     def update_image_inside_app(self, image_info):
         image_info.update_image_on_canvas()
@@ -334,7 +349,7 @@ class PyPhotoEditor:
         EnhanceSliderWindow(self.root, name, enhance, image, self.update_image_inside_app)
 
     def unsaved_image(self):
-        for info in self.opened_images:
+        for info in self.list_opened_images:
             if info.unsaved:
                 return True
         return False
@@ -346,25 +361,109 @@ class PyPhotoEditor:
         self.root.quit()  # закрываем программу
 
 
-class Install:
-    def __init__(self, root):
-        self.root = root
-        self.button_back = ttk.Button(self.root, text='Назад', command=lambda: print('Назад'))
-        self.button_publish = ttk.Button(self.root, text='Опубликовать', command=self.publish)
-        self.label = Label(self.root, font=("Arial", 14), text="Придумай текст")
+class DescriptionView(MainView):
+    title_of_post = ""
+    final_window = None
+
+    def __init__(self):
+        super().__init__()
+        #self.final_window = FinalWindow()
+
+        self.label_select_images = Label(self.root, font=("Arial", 14), text="Выбранные изображения:")
+
+        self.photo = ImageTk.PhotoImage(self.merge_images())
+        self.label_merge_image = Label(self.root, image=self.photo)
+
+        self.label = Label(self.root, font=("Arial", 14), text="Придумай текст:")
         self.text = Text(self.root, font=("Arial", 14), padx=10, pady=10, wrap=WORD)
+        self.text.insert(END, self.title_of_post)
+        self.button_back = ttk.Button(self.root, text='Назад', command=self.back)
+        self.button_publish = ttk.Button(self.root, text='Опубликовать', command=self.publish)
 
-        self.init()
+    def merge_images(self):
+        list_images = list()
+        width_merge_images = 588  # общая ширина виджета склеиных изображений
+        width_image = 98  # ширина одного изображения в виджете width_merge_images
+        images = [Image.open(image.path) for image in self.list_opened_images]
 
-    def init(self):
-        self.label.pack()
-        self.text.pack(padx=30, pady=110)
+        if len(images) > 6:
+            width_image = 588 // len(images)
+
+        for image in images:
+            img = image.resize((width_image, 100), Image.Resampling.LANCZOS)
+            list_images.append(img)
+
+        # Получаем ширину и высоту для нового изображения
+        total_width = sum(image.width for image in list_images)
+        max_height = max(image.height for image in list_images)
+
+        # Создаём новое изображение для склеивания
+        new_image = Image.new('RGB', (total_width, max_height))
+
+        # Склеиваем изображения
+        x_offset = 0
+        for image in list_images:
+            new_image.paste(image, (x_offset, 0))
+            x_offset += image.width
+
+        return new_image
+
+    def pack(self):
+        self.label_select_images.place(x=20, y=10)
+        self.label_merge_image.place(x=20, y=40)
+        self.label.place(x=20, y=150)
+        self.text.place(width=590, height=320, x=20, y=182)
         self.button_back.place(relx=1, rely=1, anchor='se', x=-105, y=-10)
         self.button_publish.place(relx=1, rely=1, anchor='se', x=-10, y=-10)
 
     def publish(self):
-        print(self.text.get("1.0", END))
+        if self.text.get("1.0", END) != "\n":
+            if mb.askyesno("Вопрос", "Вы уверены?"):
+                #self.save_img()
+                print(self.title_of_post)
+                self.forget_widgets()
+
+                self.final_window = FinalWindow()
+                print(self.final_window)
+                self.final_window.pack_final_window()
+
+    def back(self, window_description_view=True):
+        if window_description_view:
+            if self.text.get("1.0", END) != "\n":
+                DescriptionView.title_of_post = self.text.get("1.0", END)
+            self.forget_widgets()
+        else:
+            print(type(self.final_window))
+            self.final_window.forget_widgets()
+        self.run(True)
+
+    def forget_widgets(self):
+        self.label_select_images.place_forget()
+        self.label_merge_image.place_forget()
+        self.label.place_forget()
+        self.text.place_forget()
+        self.button_back.place_forget()
+        self.button_publish.place_forget()
 
 
-PyPhotoEditor().run()
+class FinalWindow(DescriptionView):
+    def __init__(self):
+        super().__init__()
+        self.label_window_3 = Label(self.root, font=("Arial", 14), text="Ваши изображения опубликованы")
+        self.button_return = ttk.Button(self.root, text='Вернуться', command=lambda: self.back(False))
+        self.button_exit = ttk.Button(self.root, text='Выход', command=self._close)
+
+    def pack_final_window(self):
+        self.label_window_3.pack()
+        self.button_return.pack()
+        self.button_exit.pack()
+
+    def forget_widgets(self):
+        self.label_window_3.pack_forget()
+        self.button_return.place_forget()
+        self.button_exit.place_forget()
+
+
+
+MainView().run()
 

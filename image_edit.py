@@ -58,6 +58,8 @@ class ImageEdit:
     def start_crop_selection(self):
         self._unbind_zoom()  # запретили двигать картинкой во время обрезания
         bbox = self.canvas.bbox(self.image_container)  # создаем новый прямоугольник
+        # bbox = (0, 0, 500, 500)
+        # print(bbox)
         self.crop_selection = Rect(*bbox, side_offset=5)
 
         self.sel_rect = self.canvas.create_rectangle(
@@ -122,6 +124,7 @@ class ImageEdit:
         y = self.canvas.canvasy(event.y)
 
         bbox = self.canvas.bbox(self.image_container)  # получили коордианаты изображения
+        #bbox = (0, 0, 500, 500)
         image = Rect(*bbox)
 
         if self.sel_change_side == "top_left":

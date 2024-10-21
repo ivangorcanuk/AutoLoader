@@ -12,6 +12,9 @@ class ImageInfo(ImageEdit):
         self.path = path
         self.tab = tab
 
+    def set_path(self, value: str):
+        self.path = value
+
     @property
     def unsaved(self) -> bool:
         return self.path[-1] == "*"
@@ -38,9 +41,10 @@ class ImageInfo(ImageEdit):
     def full_path(self, no_star=False):
         return self.path[:-1] if no_star and self.path[-1] == '*' else self.path
 
-    def save(self):
-        if not self.unsaved:
-            return
+    def save(self, isOnContinue=False):
+        if not isOnContinue:
+            if not self.unsaved:
+                return
         self.unsaved = False
         self.image.save(self.path)
 
